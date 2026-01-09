@@ -63,8 +63,11 @@ export const generateBitContent = async (topic: string): Promise<Partial<Bit>> =
     }
 
   } catch (error) {
-    console.error("Gemini Generation Error:", error);
-    throw error;
+    // Only log in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Gemini Generation Error:", error);
+    }
+    throw new Error("Failed to generate content. Please try again.");
   }
 };
 
@@ -117,7 +120,9 @@ export const simplifyBitContent = async (text: string): Promise<string> => {
         });
         return response.text || text;
     } catch (error) {
-        console.error("Simplification error:", error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Simplification error:", error);
+        }
         return text;
     }
 };
@@ -166,7 +171,9 @@ export const generateBitDiagram = async (title: string, content: string): Promis
         code = code.replace(/```mermaid/g, '').replace(/```/g, '').trim();
         return code;
     } catch (error) {
-        console.error("Diagram generation error", error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Diagram generation error", error);
+        }
         return "";
     }
 };
@@ -203,8 +210,10 @@ export const generateQuiz = async (content: string, title: string): Promise<Quiz
         }
         throw new Error("Failed to generate quiz");
     } catch (error) {
-        console.error("Quiz Generation Error:", error);
-        throw error;
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Quiz Generation Error:", error);
+        }
+        throw new Error("Failed to generate quiz. Please try again.");
     }
 };
 
@@ -229,8 +238,10 @@ export const generateBitAudio = async (text: string): Promise<string | undefined
         // Return base64 string directly
         return response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
     } catch (error) {
-        console.error("TTS Generation Error:", error);
-        throw error;
+        if (process.env.NODE_ENV === 'development') {
+          console.error("TTS Generation Error:", error);
+        }
+        throw new Error("Failed to generate audio. Please try again.");
     }
 }
 
@@ -339,7 +350,9 @@ export const getChatResponse = async (message: string, context?: string): Promis
             sources: sources
         };
     } catch (error) {
-        console.error("Chat Error:", error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Chat Error:", error);
+        }
         return { text: "Connection interrupted. The vibes are off." };
     }
 };

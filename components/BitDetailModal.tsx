@@ -5,6 +5,7 @@ import { Bit } from '../types';
 import { IconX, IconShare, IconBookmark, IconCode, IconNetwork, IconHeart } from './Icons';
 import BitCard from './BitCard';
 import SimpleSyntaxHighlighter from './SimpleSyntaxHighlighter';
+import { sanitizeHtml } from '../utils';
 
 interface BitDetailModalProps {
   bit: Bit;
@@ -90,9 +91,10 @@ const BitDetailModal: React.FC<BitDetailModalProps> = ({
          <div className="flex-1 overflow-y-auto p-6 space-y-8">
             <section className="prose prose-invert max-w-none">
                 <p className="text-lg text-slate-300 leading-relaxed">{bit.summary}</p>
-                <div className="my-6 p-4 bg-slate-900/50 rounded-xl border border-white/5 text-slate-300 whitespace-pre-line">
-                    {bit.content}
-                </div>
+                <div 
+                    className="my-6 p-4 bg-slate-900/50 rounded-xl border border-white/5 text-slate-300 whitespace-pre-line"
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(bit.content.replace(/\n/g, '<br />')) }}
+                />
             </section>
 
             {bit.codeSnippet && (

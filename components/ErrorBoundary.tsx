@@ -29,8 +29,31 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Uncaught error:", error, errorInfo);
+    // Only log in development to avoid exposing sensitive info in production
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Uncaught error:", error, errorInfo);
+    }
+    // In production, send to error tracking service (e.g., Sentry)
+    // Example: Sentry.captureException(error, { contexts: { react: errorInfo } });
   }
+
+  private sanitizeErrorMessage = (message: string | undefined): string => {
+    if (!message) return "An unexpected error occurred";
+    
+    // Remove sensitive information patterns
+    let sanitized = message
+      .replace(/api[_-]?key[=:]\s*[\w-]+/gi, '[API_KEY_REDACTED]')
+      .replace(/token[=:]\s*[\w-]+/gi, '[TOKEN_REDACTED]')
+      .replace(/password[=:]\s*\S+/gi, '[PASSWORD_REDACTED]')
+      .replace(/secret[=:]\s*[\w-]+/gi, '[SECRET_REDACTED]');
+    
+    // Limit error message length
+    if (sanitized.length > 200) {
+      sanitized = sanitized.substring(0, 197) + '...';
+    }
+    
+    return sanitized;
+  };
 
   private handleReset = () => {
     // Attempt to recover by reloading. 
@@ -60,7 +83,7 @@ class ErrorBoundary extends Component<Props, State> {
 
                 <div className="w-full bg-black/50 rounded-lg p-3 mb-8 border border-white/5 text-left overflow-hidden">
                     <code className="text-xs text-rose-400 break-all">
-                        Error: {this.state.error?.message || "Unknown Exception"}
+                        Error: {this.sanitizeErrorMessage(this.state.error?.message) || "Unknown Exception"}
                     </code>
                 </div>
 

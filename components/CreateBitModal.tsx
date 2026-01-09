@@ -4,7 +4,7 @@ import { IconSparkles, IconCpu, IconZap, IconRefresh, IconPen, IconCode, IconNet
 import { generateBitContent, generateRandomTopic } from '../services/geminiService';
 import { Bit } from '../types';
 import { ToastType } from './Toast';
-import { generateId } from '../utils';
+import { generateId, validateInput, sanitizeText } from '../utils';
 
 interface CreateBitModalProps {
   onClose: () => void;
@@ -88,14 +88,34 @@ const CreateBitModal: React.FC<CreateBitModalProps> = ({ onClose, onSave, showTo
         return;
     }
 
+    // Validate and sanitize inputs
+    const titleValidation = validateInput(generatedBit.title, { type: 'text', maxLength: 200, minLength: 3 });
+    if (!titleValidation.isValid) {
+        showToast(titleValidation.error || "Invalid title", "error");
+        return;
+    }
+
+    const summaryValidation = validateInput(generatedBit.summary, { type: 'text', maxLength: 500, minLength: 10 });
+    if (!summaryValidation.isValid) {
+        showToast(summaryValidation.error || "Invalid summary", "error");
+        return;
+    }
+
+    // Sanitize all user inputs
+    const sanitizedTags = tagsInput
+      .split(',')
+      .map(t => sanitizeText(t.trim()))
+      .filter(t => t.length > 0 && t.length <= 50)
+      .slice(0, 10); // Limit to 10 tags
+
     const newBit: Bit = {
       id: generateId(),
-      title: generatedBit.title,
-      summary: generatedBit.summary,
-      content: generatedBit.content || '',
-      codeSnippet: generatedBit.codeSnippet,
+      title: sanitizeText(titleValidation.sanitized),
+      summary: sanitizeText(summaryValidation.sanitized),
+      content: sanitizeText(generatedBit.content || ''),
+      codeSnippet: sanitizeText(generatedBit.codeSnippet || ''),
       language: generatedBit.language || 'text',
-      tags: tagsInput.split(',').map(t => t.trim()).filter(t => t.length > 0),
+      tags: sanitizedTags,
       difficulty: (generatedBit.difficulty as any) || 'Beginner',
       author: 'Neural Architect', // Or user name if we had it in context
       timestamp: Date.now(),

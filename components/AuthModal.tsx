@@ -40,13 +40,21 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
   const handleEmailLogin = (e: React.FormEvent) => {
       e.preventDefault();
       if (!email) return;
+      
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+          // In a real app, show error to user
+          return;
+      }
+      
       setIsLoading(true);
       setTimeout(() => {
           const mockUser: AuthUser = {
-              id: Math.random().toString(36).substr(2, 9),
-              name: email.split('@')[0],
+              id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substr(2, 9),
+              name: email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, ''), // Sanitize username
               provider: 'email',
-              email: email
+              email: email.toLowerCase().trim() // Normalize email
           };
           onLogin(mockUser);
           setIsLoading(false);
