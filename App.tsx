@@ -784,11 +784,12 @@ const App: React.FC = () => {
 
   // Calculate context
   const currentSlug = location.pathname.split('/bit/')[1];
-  const currentBitContext = useMemo(() => {
-      if (!currentSlug) return undefined;
-      const b = bits.find(bit => slugify(bit.title) === currentSlug || bit.id === currentSlug);
-      return b?.title;
+  const currentBit = useMemo(() => {
+      if (!currentSlug) return null;
+      return bits.find(bit => slugify(bit.title) === currentSlug || bit.id === currentSlug) || null;
   }, [currentSlug, bits]);
+
+  const currentBitContext = currentBit?.title;
 
   // Handle Tab Logic based on URL
   useEffect(() => {
@@ -903,7 +904,22 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-background text-slate-200 font-sans selection:bg-indigo-500/30 overflow-x-hidden flex flex-col">
       <Helmet>
-        <title>SYNAPSE BITS | Neural Knowledge Stream</title>
+        <title>{currentBit ? `${currentBit.title} | SYNAPSE BITS` : 'SYNAPSE BITS | Neural Knowledge Stream'}</title>
+        <meta name="description" content={currentBit ? currentBit.summary : 'Next-gen AI micro-learning for engineers. Master networking, distributed systems, and coding patterns with high-velocity data bits.'} />
+
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="SYNAPSE BITS" />
+        <meta property="og:title" content={currentBit ? `${currentBit.title} | SYNAPSE BITS` : 'SYNAPSE BITS | Neural Knowledge Stream'} />
+        <meta property="og:description" content={currentBit ? currentBit.summary : 'Next-gen AI micro-learning for engineers. Master networking, distributed systems, and coding patterns with high-velocity data bits.'} />
+        <meta property="og:url" content={typeof window !== 'undefined' ? window.location.href : ''} />
+        <meta property="og:image" content={typeof window !== 'undefined' ? `${window.location.origin}/og-image.svg` : '/og-image.svg'} />
+
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={currentBit ? `${currentBit.title} | SYNAPSE BITS` : 'SYNAPSE BITS | Neural Knowledge Stream'} />
+        <meta name="twitter:description" content={currentBit ? currentBit.summary : 'Next-gen AI micro-learning for engineers. Master networking, distributed systems, and coding patterns with high-velocity data bits.'} />
+        <meta name="twitter:image" content={typeof window !== 'undefined' ? `${window.location.origin}/og-image.svg` : '/og-image.svg'} />
       </Helmet>
       <VibeBackground />
       <NetworkStatus />

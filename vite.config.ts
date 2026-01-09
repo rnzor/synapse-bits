@@ -41,7 +41,11 @@ export default defineConfig(({ mode }) => {
           output: {
             manualChunks: {
               'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-              'ui-vendor': ['react-helmet-async']
+              'ui-vendor': ['react-helmet-async'],
+              'ai-vendor': ['@google/genai'],
+              'canvas-vendor': ['html2canvas'],
+              'mermaid-vendor': ['mermaid'],
+              'utils-vendor': ['uuid', 'dompurify']
             }
           }
         }

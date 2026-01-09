@@ -35,9 +35,11 @@ const ShareModal: React.FC<ShareModalProps> = ({ bit, onClose }) => {
     try {
       const canvas = await html2canvas(cardRef.current, {
         scale: 2, // High resolution
-        backgroundColor: '#030712', 
+        backgroundColor: '#030712',
         logging: false,
-        useCORS: true
+        useCORS: true,
+        allowTaint: true,
+        foreignObjectRendering: true
       });
       return new Promise((resolve) => {
         canvas.toBlob((blob) => {
