@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Bit, UserStats } from '../../types';
 import BitCard from '../../components/BitCard';
+import ProgressBar from '../components/ProgressBar';
+import DevDebugOverlay from '../components/DevDebugOverlay';
 import { IconLock } from '../../components/Icons';
 
 const TOPICS = [
@@ -23,23 +25,32 @@ const TopicPage: React.FC<{
   const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState<'all' | 'unread' | 'completed' | 'locked'>('all');
 
+  // Hard console error
+  if (!bits || bits.length === 0) {
+    console.error('[TopicPage] bits empty', { bits: bits?.length || 0 });
+  }
+
   const topic = TOPICS.find(t => t.slug === slug);
   if (!topic) return <div>Topic not found</div>;
 
-  const topicBits = bits.filter(bit => bit.topicSlug === topic.slug);
+  const topicBits = useMemo(() => bits.filter(bit => bit.topicSlug === topic.slug), [bits, topic.slug]);
   const progress = getTopicProgress(bits, stats, topic.slug);
 
-  let filteredBits = topicBits;
-  if (activeFilter === 'unread') {
-    filteredBits = topicBits.filter(bit => !isCompleted(stats, bit.id));
-  } else if (activeFilter === 'completed') {
-    filteredBits = topicBits.filter(bit => isCompleted(stats, bit.id));
-  } else if (activeFilter === 'locked') {
-    filteredBits = topicBits.filter(bit => bit.access === 'pro' && !user);
-  }
+  const filteredBits = useMemo(() => {
+    let f = topicBits;
+    if (activeFilter === 'unread') {
+      f = f.filter(bit => !isCompleted(stats, bit.id));
+    } else if (activeFilter === 'completed') {
+      f = f.filter(bit => isCompleted(stats, bit.id));
+    } else if (activeFilter === 'locked') {
+      f = f.filter(bit => bit.access === 'pro' && (!user || !user.isPro));
+    }
+    return f;
+  }, [topicBits, activeFilter, stats, user]);
 
   return (
     <div className="space-y-8">
+      <DevDebugOverlay bits={bits} label="TopicPage" />
       {/* Header */}
       <div>
         <button onClick={() => navigate('/topics')} className="text-indigo-400 hover:text-indigo-300 mb-4">← Back to Topics</button>
@@ -52,12 +63,7 @@ const TopicPage: React.FC<{
             <span>Progress</span>
             <span>{progress.completed}/{progress.total} bits learned</span>
           </div>
-          <div className="w-full bg-slate-700 rounded-full h-2">
-            <div
-              className="bg-indigo-600 h-2 rounded-full transition-all"
-              style={{ width: `${progress.total > 0 ? (progress.completed / progress.total) * 100 : 0}%` }}
-            ></div>
-          </div>
+          <ProgressBar progress={progress.total > 0 ? (progress.completed / progress.total) * 100 : 0} color="blue" />
         </div>
       </div>
 
@@ -79,44 +85,55 @@ const TopicPage: React.FC<{
       </div>
 
       {/* Bits Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-        {filteredBits.map(bit => {
-          const completed = isCompleted(stats, bit.id);
-          const locked = bit.access === 'pro' && !user;
+      {filteredBits.length === 0 ? (
+        <div className="text-center py-16">
+          <h3 className="text-xl font-semibold text-white mb-4">No bits found</h3>
+          <p className="text-slate-400 mb-6">Try adjusting your filters or explore other topics.</p>
+          <div className="flex gap-4 justify-center">
+            <button onClick={() => setActiveFilter('all')} className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Clear Filters</button>
+            <button onClick={() => navigate('/topics')} className="px-6 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700">Explore Topics</button>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+          {filteredBits.map(bit => {
+            const completed = isCompleted(stats, bit.id);
+            const locked = bit.access === 'pro' && (!user || !user.isPro);
 
-          return (
-            <div key={bit.id} className="relative">
-              <div className={completed ? 'opacity-60' : locked ? 'blur-sm' : ''}>
-                <BitCard
-                  bit={bit}
-                  onClick={() => {
-                    if (locked) return; // Don't navigate if locked
-                    navigate(`/bit/${bit.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`);
-                  }}
-                  onShare={() => {}}
-                  onTagClick={() => {}}
-                  onBookmark={() => {}}
-                />
-              </div>
-              {completed && (
-                <div className="absolute top-2 right-2 bg-emerald-600 text-white rounded-full p-1">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
+            return (
+              <div key={bit.id} className="relative">
+                <div className={completed ? 'opacity-60' : locked ? 'blur-sm' : ''}>
+                  <BitCard
+                    bit={bit}
+                    onClick={() => {
+                      if (locked) return; // Don't navigate if locked
+                      navigate(`/bit/${bit.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`);
+                    }}
+                    onShare={() => {}}
+                    onTagClick={() => {}}
+                    onBookmark={() => {}}
+                  />
                 </div>
-              )}
-              {locked && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-2xl">
-                  <div className="text-center">
-                    <IconLock className="w-8 h-8 text-amber-400 mx-auto mb-2" />
-                    <span className="text-white font-medium">PRO Required</span>
+                {completed && (
+                  <div className="absolute top-2 right-2 bg-emerald-600 text-white rounded-full p-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
                   </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+                )}
+                {locked && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-2xl">
+                    <div className="text-center">
+                      <IconLock className="w-8 h-8 text-amber-400 mx-auto mb-2" />
+                      <span className="text-white font-medium">PRO Required</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

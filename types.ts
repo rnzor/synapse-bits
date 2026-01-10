@@ -42,6 +42,7 @@ export interface AuthUser {
     avatarUrl: string;
     linkedAt: number;
   };
+  isPro?: boolean;
 }
 
 export interface User {

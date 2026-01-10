@@ -1,15 +1,25 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { TRACKS } from '../data/tracks';
-import { Bit } from '../../types';
+import { Bit, UserStats } from '../../types';
+import { getTrackProgress, getNextBitInTrack, canAccessTrack, getTrackPrerequisitesMet } from '../utils/progress';
+import DevDebugOverlay from '../components/DevDebugOverlay';
 import { IconArrowRight, IconClock, IconStar, IconLock, IconPlay } from '../../components/Icons';
 
-// Mock bits data - in real implementation this would come from props
-const MOCK_BITS: Bit[] = [];
+interface TrackPageProps {
+  bits: Bit[];
+  stats: UserStats;
+  user?: any;
+}
 
-const TrackPage: React.FC = () => {
+const TrackPage: React.FC<TrackPageProps> = ({ bits, stats, user }) => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+
+  // Hard console error
+  if (!bits || bits.length === 0) {
+    console.error('[TrackPage] bits empty', { bits: bits?.length || 0 });
+  }
 
   const track = TRACKS.find(t => t.slug === slug);
 
@@ -26,12 +36,16 @@ const TrackPage: React.FC = () => {
     );
   }
 
-  const trackBits = MOCK_BITS.filter(bit => track.bitIds.includes(bit.id));
-  const completedCount = 0; // Would be calculated from user stats
-  const progress = track.bitIds.length > 0 ? (completedCount / track.bitIds.length) * 100 : 0;
+  const trackProgress = getTrackProgress(track, stats);
+  const nextBitId = getNextBitInTrack(track, stats);
+  const canAccess = canAccessTrack(track, stats, user);
+  const prerequisitesMet = getTrackPrerequisitesMet(track, stats);
+
+  const trackBits = bits.filter(bit => track.bitIds.includes(bit.id));
 
   return (
     <div className="space-y-8">
+      <DevDebugOverlay bits={bits} label="TrackPage" />
       {/* Header */}
       <div>
         <button onClick={() => navigate('/tracks')} className="text-indigo-400 hover:text-indigo-300 mb-4 flex items-center space-x-2">
@@ -71,11 +85,28 @@ const TrackPage: React.FC = () => {
           </div>
 
           <button
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2 transition-colors"
-            onClick={() => navigate(`/bit/${track.bitIds[0]}`)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => {
+              if (nextBitId) {
+                const nextBit = bits.find(b => b.id === nextBitId);
+                if (nextBit) {
+                  navigate(`/bit/${nextBit.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`);
+                }
+              } else if (trackProgress.percentage === 0) {
+                const firstBit = bits.find(b => b.id === track.bitIds[0]);
+                if (firstBit) {
+                  navigate(`/bit/${firstBit.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`);
+                }
+              }
+            }}
+            disabled={!canAccess || !prerequisitesMet}
           >
             <IconPlay className="w-4 h-4" />
-            <span>Start Track</span>
+            <span>
+              {trackProgress.percentage === 100 ? 'Completed' :
+               nextBitId ? 'Continue' :
+               'Start Track'}
+            </span>
           </button>
         </div>
 
@@ -83,12 +114,12 @@ const TrackPage: React.FC = () => {
         <div className="mb-8">
           <div className="flex justify-between text-sm text-slate-400 mb-2">
             <span>Progress</span>
-            <span>{completedCount}/{track.bitIds.length} bits completed</span>
+            <span>{trackProgress.completed}/{track.bitIds.length} bits completed</span>
           </div>
           <div className="w-full bg-slate-700 rounded-full h-3">
             <div
               className="bg-indigo-600 h-3 rounded-full transition-all duration-500"
-              style={{ width: `${progress}%` }}
+              style={{ width: `${trackProgress.percentage}%` }}
             ></div>
           </div>
         </div>
@@ -124,20 +155,22 @@ const TrackPage: React.FC = () => {
 
         {track.bitIds.map((bitId, index) => {
           const bit = trackBits.find(b => b.id === bitId);
-          const isCompleted = false; // Would be calculated from user stats
-          const isLocked = false; // Would be calculated based on prerequisites
+          const isCompleted = stats.completedBits.includes(bitId);
+          // For sequential access: locked if any previous bit is not completed
+          const previousBitsCompleted = track.bitIds.slice(0, index).every(prevId => stats.completedBits.includes(prevId));
+          const isLocked = !canAccess || !prerequisitesMet || !previousBitsCompleted;
 
           return (
             <div
               key={bitId}
               className={`glass-panel rounded-xl p-6 border transition-all ${
                 isCompleted
-                  ? 'border-emerald-500/30 bg-emerald-500/5'
+                  ? 'border-emerald-500/30 bg-emerald-500/5 opacity-75'
                   : isLocked
                   ? 'border-slate-600 bg-slate-800/50 cursor-not-allowed'
                   : 'border-white/10 hover:border-indigo-500/30 cursor-pointer'
               }`}
-              onClick={() => !isLocked && navigate(`/bit/${bitId}`)}
+              onClick={() => !isLocked && bit && navigate(`/bit/${bit.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
@@ -151,10 +184,10 @@ const TrackPage: React.FC = () => {
                     {isCompleted ? '✓' : index + 1}
                   </div>
                   <div>
-                    <h4 className={`font-medium ${isLocked ? 'text-slate-500' : 'text-white'}`}>
+                    <h4 className={`font-medium ${isLocked ? 'text-slate-500' : isCompleted ? 'text-slate-400' : 'text-white'}`}>
                       {bit?.title || `Bit ${bitId}`}
                     </h4>
-                    <p className={`text-sm ${isLocked ? 'text-slate-600' : 'text-slate-400'}`}>
+                    <p className={`text-sm ${isLocked ? 'text-slate-600' : isCompleted ? 'text-slate-500' : 'text-slate-400'}`}>
                       {bit?.summary || 'Loading...'}
                     </p>
                   </div>
