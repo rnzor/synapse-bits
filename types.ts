@@ -60,6 +60,8 @@ export interface UserStats {
   lastLogin: number;
   badges: string[]; // Array of Badge IDs
   bookmarkedBits: string[]; // IDs of saved bits
+  completedBits: string[]; // Unique IDs of completed bits
+  lastSeenBitId?: string; // Last bit the user viewed
 }
 
 export interface Badge {

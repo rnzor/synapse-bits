@@ -1,11 +1,23 @@
 
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Bit } from '../types';
-import { IconX, IconShare, IconBookmark, IconCode, IconNetwork, IconHeart } from './Icons';
+import { Bit, UserStats } from '../types';
+import { IconX, IconShare, IconBookmark, IconCode, IconNetwork, IconHeart, IconCheck } from './Icons';
 import BitCard from './BitCard';
 import SimpleSyntaxHighlighter from './SimpleSyntaxHighlighter';
 import { sanitizeHtml } from '../utils';
+
+// Progress utility functions
+function isCompleted(stats: UserStats, bitId: string): boolean {
+  return stats.completedBits.includes(bitId);
+}
+
+function getTopicProgress(bits: Bit[], stats: UserStats, topicSlug: string): { completed: number, total: number } {
+  const topicBits = bits.filter(bit => bit.topicSlug === topicSlug);
+  const completed = topicBits.filter(bit => isCompleted(stats, bit.id)).length;
+  const total = topicBits.length;
+  return { completed, total };
+}
 
 interface BitDetailModalProps {
   bit: Bit;
@@ -17,19 +29,23 @@ interface BitDetailModalProps {
   onAddXp?: (amount: number) => void;
   onQuizWin?: () => void;
   onComplete?: (bit: Bit, timeSpent: number) => void;
+  onMarkCompleted?: (bitId: string) => void;
   user?: any;
   isBookmarked?: boolean;
   onVote?: (id: string) => void;
+  stats?: UserStats;
 }
 
-const BitDetailModal: React.FC<BitDetailModalProps> = ({ 
-    bit, 
-    allBits, 
-    onClose, 
-    onShare, 
-    onBookmark, 
+const BitDetailModal: React.FC<BitDetailModalProps> = ({
+    bit,
+    allBits,
+    onClose,
+    onShare,
+    onBookmark,
     isBookmarked = false,
-    onVote
+    onVote,
+    onMarkCompleted,
+    stats
 }) => {
   // Logic to find related bits
   const relatedBits = allBits
@@ -91,7 +107,14 @@ const BitDetailModal: React.FC<BitDetailModalProps> = ({
          <div className="flex-1 overflow-y-auto p-6 space-y-8">
             <section className="prose prose-invert max-w-none">
                 <p className="text-lg text-slate-300 leading-relaxed">{bit.summary}</p>
-                <div 
+                {bit.topicSlug && stats && (
+                    <div className="my-4 p-3 bg-indigo-900/20 rounded-lg border border-indigo-500/20">
+                        <p className="text-sm text-indigo-300">
+                            Topic progress: {getTopicProgress(allBits, stats, bit.topicSlug).completed}/{getTopicProgress(allBits, stats, bit.topicSlug).total} bits learned
+                        </p>
+                    </div>
+                )}
+                <div
                     className="my-6 p-4 bg-slate-900/50 rounded-xl border border-white/5 text-slate-300 whitespace-pre-line"
                     dangerouslySetInnerHTML={{ __html: sanitizeHtml(bit.content.replace(/\n/g, '<br />')) }}
                 />

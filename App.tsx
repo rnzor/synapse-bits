@@ -19,6 +19,37 @@ import TutorialReader from './components/TutorialReader';
 import { IconSearch, IconPlus, IconCpu, IconFire, IconCompass, IconStar, IconMenu, IconBookmark, IconBook } from './components/Icons';
 import { slugify } from './utils';
 
+// Progress utility functions
+function isCompleted(stats: UserStats, bitId: string): boolean {
+  return stats.completedBits.includes(bitId);
+}
+
+function markCompleted(stats: UserStats, bitId: string): UserStats {
+  if (isCompleted(stats, bitId)) return stats;
+  return {
+    ...stats,
+    completedBits: [...stats.completedBits, bitId],
+    lastSeenBitId: bitId
+  };
+}
+
+function getTopicProgress(bits: Bit[], stats: UserStats, topicSlug: string): { completed: number, total: number } {
+  const topicBits = bits.filter(bit => bit.topicSlug === topicSlug);
+  const completed = topicBits.filter(bit => isCompleted(stats, bit.id)).length;
+  const total = topicBits.length;
+  return { completed, total };
+}
+
+function getNextBitToContinue(bits: Bit[], stats: UserStats, topicSlug?: string): Bit | null {
+  let candidates = bits;
+  if (topicSlug) {
+    candidates = bits.filter(bit => bit.topicSlug === topicSlug);
+  }
+  // Find first incomplete bit
+  const nextBit = candidates.find(bit => !isCompleted(stats, bit.id));
+  return nextBit || null;
+}
+
 // --- DATASET: 100+ Curated Bits ---
 const INITIAL_BITS: Bit[] = [
   // --- CORE CONCEPTS ---
@@ -494,13 +525,15 @@ const INITIAL_STATS: UserStats = {
     streak: 1,
     lastLogin: Date.now(),
     badges: [],
-    bookmarkedBits: []
+    bookmarkedBits: [],
+    completedBits: [],
+    lastSeenBitId: undefined
 };
 
 // --- COMPONENTS ---
 
 // Route wrapper for detail modal
-const BitDetailRoute = ({ bits, onVote, showToast, onAddXp, onQuizWin, stats, onBookmark, user, onBitComplete }: any) => {
+const BitDetailRoute = ({ bits, onVote, showToast, onAddXp, onQuizWin, stats, onBookmark, user, onBitComplete, onMarkCompleted }: any) => {
     const { slug } = useParams();
     const navigate = useNavigate();
     
@@ -522,17 +555,18 @@ const BitDetailRoute = ({ bits, onVote, showToast, onAddXp, onQuizWin, stats, on
 
     return (
         <Suspense fallback={<div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center"><div className="w-10 h-10 border-4 border-indigo-500 rounded-full animate-spin border-t-transparent"></div></div>}>
-            <BitDetailModal 
-                bit={bit} 
-                allBits={bits} 
+            <BitDetailModal
+                bit={bit}
+                allBits={bits}
                 isBookmarked={isBookmarked}
-                onClose={() => navigate('/')} 
+                onClose={() => navigate('/')}
                 onVote={onVote}
                 onBookmark={onBookmark}
                 showToast={showToast}
                 onAddXp={onAddXp}
                 onQuizWin={onQuizWin}
                 onComplete={onBitComplete}
+                onMarkCompleted={onMarkCompleted}
                 user={user}
             />
         </Suspense>
@@ -752,19 +786,19 @@ const App: React.FC = () => {
   });
 
   const [stats, setStats] = useState<UserStats>(() => {
-      try { 
-        const saved = localStorage.getItem('ai-bits-stats'); 
+      try {
+        const saved = localStorage.getItem('ai-bits-stats');
         if (saved) {
           const parsed = JSON.parse(saved);
-          // Ensure bookmarkedBits exists for backward compatibility
-          if (!parsed.bookmarkedBits) {
-            parsed.bookmarkedBits = [];
-          }
+          // Ensure backward compatibility for new fields
+          if (!parsed.bookmarkedBits) parsed.bookmarkedBits = [];
+          if (!parsed.completedBits) parsed.completedBits = [];
+          if (!parsed.lastSeenBitId) parsed.lastSeenBitId = undefined;
           return parsed;
         }
-        return INITIAL_STATS; 
-      } catch { 
-        return INITIAL_STATS; 
+        return INITIAL_STATS;
+      } catch {
+        return INITIAL_STATS;
       }
   });
 
@@ -849,6 +883,13 @@ const App: React.FC = () => {
       handleAddXp(10);
       return newStats;
     });
+  };
+
+  const handleMarkCompleted = (bitId: string) => {
+    if (!user) return;
+    setStats(prev => markCompleted(prev, bitId));
+    handleAddXp(10);
+    addToast('Bit marked as learned! +10 XP', 'success');
   };
 
   const handleQuizWin = () => {
