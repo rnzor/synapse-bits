@@ -1,4 +1,3 @@
-
 import React, { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Bit } from '../types';
@@ -53,16 +52,13 @@ const BitCard: React.FC<BitCardProps> = ({ bit, isBookmarked = false, onClick, o
   };
 
   const handleShareClick = (e: React.MouseEvent) => {
+    console.log('handleShareClick called for bit:', bit.title);
     e.stopPropagation();
     e.preventDefault();
     onShare(bit);
   };
 
-  const handleTagClick = (e: React.MouseEvent, tag: string) => {
-    e.stopPropagation();
-    e.preventDefault();
-    onTagClick(tag);
-  };
+
 
   const handleBookmarkClick = (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -80,19 +76,22 @@ const BitCard: React.FC<BitCardProps> = ({ bit, isBookmarked = false, onClick, o
         className="group relative h-full perspective-1000"
         style={{ perspective: '1000px' }}
     >
-      <Link 
-          to={`/bit/${slugify(bit.title)}`} 
+      <Link
+          to={`/bit/${slugify(bit.title)}`}
           onClick={() => onClick(bit)}
           className={`flex flex-col h-full bg-[#0B101B] rounded-3xl overflow-hidden transition-all duration-300 ease-out shadow-2xl relative z-10 ${
-              isNew 
-              ? 'border border-cyan-500/40 shadow-[0_0_30px_-10px_rgba(6,182,212,0.15)]' 
+              isNew
+              ? 'border border-cyan-500/40 shadow-[0_0_30px_-10px_rgba(6,182,212,0.15)]'
               : 'border border-white/5 hover:border-white/10'
           }`}
-          style={{
-              transform: `rotateX(${rotate.x}deg) rotateY(${rotate.y}deg)`,
-              transformStyle: 'preserve-3d',
-          }}
       >
+          <div
+              style={{
+                  transform: `rotateX(${rotate.x}deg) rotateY(${rotate.y}deg)`,
+                  transformStyle: 'preserve-3d',
+              }}
+              className="flex flex-col h-full"
+          >
           {/* Holographic Glow Border (Mouse Follow) */}
           <div className="hidden md:block absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" 
                style={{
@@ -187,6 +186,7 @@ const BitCard: React.FC<BitCardProps> = ({ bit, isBookmarked = false, onClick, o
                 </div>
               </div>
           </div>
+          </div> {/* Closing div for transform container */}
       </Link>
     </article>
   );

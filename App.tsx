@@ -1,26 +1,22 @@
 
 import React, { useState, useEffect, useCallback, useMemo, Suspense, useRef } from 'react';
-import { Routes, Route, useNavigate, useLocation, useParams, Link } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Bit, UserStats, Badge, AuthUser, Tutorial } from './types';
 import BitCard from './components/BitCard';
 import CreateBitModal from './components/CreateBitModal';
 import BitDetailModal from './components/BitDetailModal';
-import UserProfileModal from './components/UserProfileModal';
 import ShareModal from './components/ShareModal';
-import Toast, { ToastMessage, ToastType } from './components/Toast';
+import { ToastMessage, ToastType } from './components/Toast';
 import VibeBackground from './components/VibeBackground';
 import BitSwipeDeck from './components/BitSwipeDeck';
 import NetworkStatus from './components/NetworkStatus';
 import AuthModal from './components/AuthModal';
 import ProgressDashboard from './components/ProgressDashboard';
-import LevelUpModal from './components/LevelUpModal';
 import ChatDrawer from './components/ChatDrawer';
 import TutorialCard from './components/TutorialCard';
 import TutorialReader from './components/TutorialReader';
-import { IconSearch, IconPlus, IconCpu, IconFire, IconUser, IconDownload, IconCompass, IconStar, IconGrid, IconList, IconMenu, IconRefresh, IconX, IconHome, IconBookmark, IconDiscord, IconTrophy, IconArrowRight, IconBook } from './components/Icons';
-import { suggestTopics } from './services/geminiService';
-import { sendBitCompletionWebhook } from './services/discordService';
+import { IconSearch, IconPlus, IconCpu, IconFire, IconCompass, IconStar, IconMenu, IconBookmark, IconBook } from './components/Icons';
 import { slugify } from './utils';
 
 // --- DATASET: 100+ Curated Bits ---
@@ -489,7 +485,7 @@ const AVAILABLE_BADGES: Badge[] = [
     { id: 'b_scholar', name: 'Scholar', description: 'Read 10 Bits.', icon: 'brain', color: 'blue', condition: (s) => s.bitsRead >= 10 },
     { id: 'b_streak_3', name: 'On Fire', description: 'Maintain a 3-day streak.', icon: 'fire', color: 'orange', condition: (s) => s.streak >= 3 },
     { id: 'b_quiz_1', name: 'Sharp Mind', description: 'Win 1 Quiz Challenge.', icon: 'medal', color: 'purple', condition: (s) => s.quizzesWon >= 1 },
-    { id: 'b_level_5', name: 'Neural Master', description: 'Reach Level 5.', icon: 'zap', color: 'amber', condition: (s, l) => l >= 5 },
+    { id: 'b_level_5', name: 'Neural Master', description: 'Reach Level 5.', icon: 'zap', color: 'amber', condition: (_, l) => l >= 5 },
 ];
 
 const INITIAL_STATS: UserStats = {
@@ -571,16 +567,20 @@ const DailyBitHero = ({ bit, onClick }: { bit: Bit, onClick: (bit: Bit) => void 
 };
 
 // Sidebar Navigation Component
-const Sidebar = ({ 
-    activeTab, 
-    setActiveTab, 
+const Sidebar = ({
+    activeTab,
+    setActiveTab,
     categories,
-    navigate
-}: { 
-    activeTab: string, 
-    setActiveTab: (t: string) => void, 
+    navigate,
+    setSearchTerm,
+    setCurrentPage
+}: {
+    activeTab: string,
+    setActiveTab: (t: string) => void,
     categories: string[],
-    navigate: any
+    navigate: any,
+    setSearchTerm: (s: string) => void,
+    setCurrentPage: (p: number) => void
 }) => {
     const [randomFact, setRandomFact] = useState(() => DID_YOU_KNOW_FACTS[Math.floor(Math.random() * DID_YOU_KNOW_FACTS.length)]);
     
@@ -654,11 +654,11 @@ const Sidebar = ({
                     <ul className="space-y-1">
                         {categories.map(cat => (
                             <li key={cat}>
-                                <button 
-                                    onClick={() => { setActiveTab(cat); navigate('/'); }}
+                                <button
+                                    onClick={() => { setSearchTerm(''); setActiveTab(cat); setCurrentPage(1); navigate('/'); }}
                                     className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                                        activeTab === cat 
-                                        ? 'text-emerald-400 bg-emerald-400/10 border-l-2 border-emerald-400 translate-x-2' 
+                                        activeTab === cat
+                                        ? 'text-emerald-400 bg-emerald-400/10 border-l-2 border-emerald-400 translate-x-2'
                                         : 'text-slate-500 hover:text-slate-300 hover:translate-x-1 border-l-2 border-transparent'
                                     }`}
                                 >
@@ -969,7 +969,7 @@ const App: React.FC = () => {
         </header>
 
         <div className="flex flex-col lg:flex-row gap-10">
-            <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} categories={categories} navigate={navigate} />
+            <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} categories={categories} navigate={navigate} setSearchTerm={setSearchTerm} setCurrentPage={setCurrentPage} />
 
             <main className="flex-1 min-w-0 pb-20">
                 
@@ -1018,7 +1018,7 @@ const App: React.FC = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-8">
                                     {paginatedBits.map((bit) => (
                                         <div key={bit.id} className="h-full">
-                                        <BitCard bit={bit} isBookmarked={stats?.bookmarkedBits?.includes(bit.id) || false} onClick={() => {}} onShare={(b) => setSharingBit(b)} onTagClick={(tag) => { setSearchTerm(tag); setActiveTab('all'); }} onBookmark={() => handleBookmark(bit.id)} />
+                                        <BitCard bit={bit} isBookmarked={stats?.bookmarkedBits?.includes(bit.id) || false} onClick={() => {}} onShare={(b) => { console.log('Share clicked for bit:', b.title); setSharingBit(b); }} onTagClick={(tag) => { setSearchTerm(tag); setActiveTab('all'); }} onBookmark={() => handleBookmark(bit.id)} />
                                         </div>
                                     ))}
                                     </div>
