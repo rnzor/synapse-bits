@@ -1098,7 +1098,7 @@ const App: React.FC = () => {
 
                     <main className="flex-1 min-w-0 pb-20">
                         <Routes>
-                            <Route path="/" element={<HomePage bits={bits} stats={stats} user={user} onShare={(b: Bit) => setSharingBit(b)} />} />
+                            <Route path="/" element={<HomePage bits={bits} stats={stats} user={user} xp={xp} onShare={(b: Bit) => setSharingBit(b)} onBookmark={handleBookmark} />} />
                             <Route path="/explore" element={
                                 <ExploreView
                                     bits={bits}
