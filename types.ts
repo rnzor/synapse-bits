@@ -53,6 +53,13 @@ export interface User {
   level: number;
 }
 
+export interface TrackProgress {
+  trackSlug: string;
+  completedBitIds: string[];
+  startedAt: number;
+  lastAccessedAt: number;
+}
+
 export interface UserStats {
   bitsRead: number;
   quizzesWon: number;
@@ -62,6 +69,12 @@ export interface UserStats {
   bookmarkedBits: string[]; // IDs of saved bits
   completedBits: string[]; // Unique IDs of completed bits
   lastSeenBitId?: string; // Last bit the user viewed
+  trackProgress: TrackProgress[]; // New: track completion tracking
+  continueLearning: {
+    nextBitId?: string; // Recommended next bit
+    nextTrackSlug?: string; // Recommended next track
+    reason: 'incomplete-track' | 'next-topic' | 'streak-goal';
+  };
 }
 
 export interface Badge {
@@ -81,6 +94,15 @@ export interface Topic {
   order: number;
 }
 
+export interface Project {
+  id: string;
+  title: string;
+  description: string;
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  estimatedTime: string;
+  githubUrl?: string;
+}
+
 export interface Track {
   id: string;
   slug: string;
@@ -90,6 +112,9 @@ export interface Track {
   level: 'Beginner' | 'Intermediate' | 'Advanced';
   isPro: boolean;
   bitIds: string[];
+  prerequisites?: string[]; // Track slugs that should be completed first
+  estimatedTime: string; // "2 hours"
+  projects?: Project[]; // Optional projects to build
 }
 
 export interface QuizQuestion {

@@ -16,7 +16,10 @@ import ProgressDashboard from './components/ProgressDashboard';
 import ChatDrawer from './components/ChatDrawer';
 import TutorialCard from './components/TutorialCard';
 import TutorialReader from './components/TutorialReader';
-import { IconSearch, IconPlus, IconCpu, IconFire, IconCompass, IconStar, IconMenu, IconBookmark, IconBook } from './components/Icons';
+import HomePage from './src/pages/HomePage';
+import TopicsPage from './src/pages/TopicsPage';
+import TopicPage from './src/pages/TopicPage';
+import { IconSearch, IconPlus, IconCpu, IconFire, IconCompass, IconStar, IconMenu, IconBookmark, IconBook, IconHome } from './components/Icons';
 import { slugify } from './utils';
 
 // Progress utility functions
@@ -634,11 +637,26 @@ const Sidebar = ({
                     <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-6 px-4">System Feed</h3>
                     <ul className="space-y-2">
                         <li>
-                            <button 
-                                onClick={() => { setActiveTab('all'); navigate('/'); }}
+                            <button
+                                onClick={() => { setActiveTab('home'); navigate('/'); }}
                                 className={`group w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 ${
-                                    activeTab === 'all' 
-                                    ? 'bg-indigo-600 text-white shadow-[0_0_20px_-5px_rgba(99,102,241,0.5)]' 
+                                    activeTab === 'home'
+                                    ? 'bg-indigo-600 text-white shadow-[0_0_20px_-5px_rgba(99,102,241,0.5)]'
+                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                }`}
+                            >
+                                <div className="flex items-center space-x-3">
+                                    <IconHome className={`w-5 h-5 ${activeTab === 'home' ? 'animate-pulse' : ''}`} />
+                                    <span className="font-medium">Home</span>
+                                </div>
+                            </button>
+                        </li>
+                        <li>
+                            <button
+                                onClick={() => { setActiveTab('all'); navigate('/explore'); }}
+                                className={`group w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 ${
+                                    activeTab === 'all'
+                                    ? 'bg-indigo-600 text-white shadow-[0_0_20px_-5px_rgba(99,102,241,0.5)]'
                                     : 'text-slate-400 hover:text-white hover:bg-white/5'
                                 }`}
                             >
@@ -683,6 +701,43 @@ const Sidebar = ({
                 </div>
 
                 {/* Topics */}
+                <div>
+                    <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-6 px-4">Learning Paths</h3>
+                    <ul className="space-y-2 mb-6">
+                        <li>
+                            <button
+                                onClick={() => { setActiveTab('topics'); navigate('/topics'); }}
+                                className={`group w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 ${
+                                    activeTab === 'topics'
+                                    ? 'bg-emerald-600 text-white shadow-[0_0_20px_-5px_rgba(16,185,129,0.5)]'
+                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                }`}
+                            >
+                                <div className="flex items-center space-x-3">
+                                    <IconBook className="w-5 h-5" />
+                                    <span className="font-medium">Topics</span>
+                                </div>
+                            </button>
+                        </li>
+                        <li>
+                            <button
+                                onClick={() => { setActiveTab('tracks'); navigate('/tracks'); }}
+                                className={`group w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 ${
+                                    activeTab === 'tracks'
+                                    ? 'bg-purple-600 text-white shadow-[0_0_20px_-5px_rgba(147,51,234,0.5)]'
+                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                }`}
+                            >
+                                <div className="flex items-center space-x-3">
+                                    <IconStar className="w-5 h-5" />
+                                    <span className="font-medium">Tracks</span>
+                                </div>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                {/* Data Streams */}
                 <div>
                     <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-6 px-4">Data Streams</h3>
                     <ul className="space-y-1">
@@ -1090,6 +1145,13 @@ const App: React.FC = () => {
       <ChatDrawer context={currentBitContext} />
 
       <Routes>
+          <Route path="/" element={<HomePageWrapper bits={bits} stats={stats} user={user} />} />
+          <Route path="/explore" element={<ExplorePageWrapper bits={bits} stats={stats} user={user} />} />
+          <Route path="/topics" element={<TopicsPageWrapper bits={bits} stats={stats} />} />
+          <Route path="/topic/:slug" element={<TopicPageWrapper bits={bits} stats={stats} user={user} />} />
+          <Route path="/tracks" element={<TracksPageWrapper />} />
+          <Route path="/track/:slug" element={<TrackPageWrapper />} />
+
           <Route path="/bit/:slug" element={
                <BitDetailRoute 
                     bits={bits} 
@@ -1116,6 +1178,32 @@ const App: React.FC = () => {
       {/* ... */}
     </div>
   );
+};
+
+// Wrapper components for new pages
+const HomePageWrapper = ({ bits, stats, user }: any) => {
+    return <HomePage bits={bits} stats={stats} user={user} />;
+};
+
+const ExplorePageWrapper = ({ bits, stats, user }: any) => {
+    return <TopicsPage bits={bits} stats={stats} />; // Using existing TopicsPage as explore for now
+};
+
+const TopicsPageWrapper = ({ bits, stats }: any) => {
+    return <TopicsPage bits={bits} stats={stats} />;
+};
+
+const TopicPageWrapper = ({ bits, stats, user }: any) => {
+    const { slug } = useParams<{ slug: string }>();
+    return <TopicPage bits={bits} stats={stats} user={user} />;
+};
+
+const TracksPageWrapper = () => {
+    return <div>Tracks Page - Coming Soon</div>;
+};
+
+const TrackPageWrapper = () => {
+    return <div>Track Detail Page - Coming Soon</div>;
 };
 
 // Wrapper to handle finding tutorial
