@@ -11,6 +11,8 @@ export interface Bit {
   timestamp: number;
   votes: number;
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  access: 'free' | 'pro';
+  topicSlug?: string;
 }
 
 export interface Tutorial {
@@ -67,6 +69,25 @@ export interface Badge {
   icon: 'medal' | 'brain' | 'fire' | 'code' | 'zap';
   color: string;
   condition: (stats: UserStats, level: number) => boolean;
+}
+
+export interface Topic {
+  slug: string;
+  label: string;
+  description: string;
+  iconKey: string;
+  order: number;
+}
+
+export interface Track {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  topicSlug: string;
+  level: 'Beginner' | 'Intermediate' | 'Advanced';
+  isPro: boolean;
+  bitIds: string[];
 }
 
 export interface QuizQuestion {
