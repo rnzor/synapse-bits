@@ -42,15 +42,15 @@ export function isTrackCompleted(track: Track, stats: UserStats): boolean {
   return track.bitIds.every(bitId => isCompleted(stats, bitId));
 }
 
-export function getTrackPrerequisitesMet(track: Track, stats: UserStats): boolean {
+export function getTrackPrerequisitesMet(track: Track, _stats: UserStats): boolean {
   if (!track.prerequisites || track.prerequisites.length === 0) return true;
-  return track.prerequisites.every(prereqSlug => {
-    const prereqTrack = { slug: prereqSlug } as Track; // Simplified for now
-    return isTrackCompleted(prereqTrack, stats);
-  });
+  // Dynamic tracks currently don't have defined prerequisites
+  return true;
 }
 
-export function canAccessTrack(track: Track, stats: UserStats, user?: any): boolean {
+
+export function canAccessTrack(track: Track, _stats: UserStats, user?: any): boolean {
+
   // Free tracks are always accessible
   if (!track.isPro) return true;
 
@@ -67,7 +67,8 @@ export function getNextBitInTrack(track: Track, stats: UserStats): string | null
   return nextIncompleteBit || null;
 }
 
-export function getContinueLearningRecommendation(tracks: Track[], bits: Bit[], stats: UserStats): {
+export function getContinueLearningRecommendation(tracks: Track[], _bits: Bit[], stats: UserStats): {
+
   nextBitId?: string;
   nextTrackSlug?: string;
   reason: 'incomplete-track' | 'next-topic' | 'streak-goal' | 'none';

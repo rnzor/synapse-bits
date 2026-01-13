@@ -19,11 +19,9 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [react()],
       define: {
-        // Only expose API key in development (should be moved to backend)
-        'process.env.API_KEY': mode === 'development' ? JSON.stringify(env.GEMINI_API_KEY) : JSON.stringify(''),
-        'process.env.GEMINI_API_KEY': mode === 'development' ? JSON.stringify(env.GEMINI_API_KEY) : JSON.stringify(''),
         'process.env.NODE_ENV': JSON.stringify(mode)
       },
+
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
@@ -42,7 +40,6 @@ export default defineConfig(({ mode }) => {
             manualChunks: {
               'react-vendor': ['react', 'react-dom', 'react-router-dom'],
               'ui-vendor': ['react-helmet-async'],
-              'ai-vendor': ['@google/genai'],
               'canvas-vendor': ['html2canvas'],
               'mermaid-vendor': ['mermaid'],
               'utils-vendor': ['uuid', 'dompurify']

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Bit, UserStats, AuthUser } from '../../types';
+
 import BitCard from '../../components/BitCard';
 import ProgressDashboard from '../../components/ProgressDashboard';
 import { IconFire, IconZap, IconCode, IconNetwork, IconStar, IconArrowRight, IconCompass, IconZap as IconExpert } from '../../components/Icons';
@@ -13,13 +14,16 @@ interface HomePageProps {
   user?: AuthUser | null;
   xp?: number;
   onShare?: (bit: Bit) => void;
-  onBookmark?: (bitId: string) => void;
+  onBookmark?: (bit: Bit) => void;
 }
+
 
 const HomePage: React.FC<HomePageProps> = ({ bits, stats, user, xp = 0, onShare, onBookmark }) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Data derivations
+
   const trendingBits = useMemo(() => [...bits].sort((a, b) => b.votes - a.votes).slice(0, 6), [bits]);
   const freshBits = useMemo(() => [...bits].sort((a, b) => b.timestamp - a.timestamp).slice(0, 3), [bits]);
   const dailyBit = bits[0];
@@ -38,9 +42,10 @@ const HomePage: React.FC<HomePageProps> = ({ bits, stats, user, xp = 0, onShare,
     const availableBits = user && user.isPro ? bits : bits.filter(bit => bit.access === 'free');
     if (availableBits.length > 0) {
       const randomBit = availableBits[Math.floor(Math.random() * availableBits.length)];
-      navigate(`/bit/${slugify(randomBit.title)}`);
+      navigate(`/bit/${slugify(randomBit.title)}`, { state: { from: location.pathname } });
     }
   };
+
 
   return (
     <div className="space-y-24 pb-20 animate-in fade-in duration-700">
@@ -91,8 +96,9 @@ const HomePage: React.FC<HomePageProps> = ({ bits, stats, user, xp = 0, onShare,
 
           <div className="relative group">
             <div className="absolute inset-0 bg-indigo-600/20 blur-[100px] rounded-full opacity-40 group-hover:opacity-60 transition-opacity duration-1000"></div>
-            <DailyBitPreview bit={dailyBit} onClick={() => navigate(`/bit/${slugify(dailyBit.title)}`)} />
+            <DailyBitPreview bit={dailyBit} onClick={() => navigate(`/bit/${slugify(dailyBit.title)}`, { state: { from: location.pathname } })} />
           </div>
+
         </div>
       </section>
 
@@ -138,13 +144,16 @@ const HomePage: React.FC<HomePageProps> = ({ bits, stats, user, xp = 0, onShare,
             <div key={bit.id} className="min-w-[340px] md:min-w-[400px] snap-start">
               <BitCard
                 bit={bit}
-                onClick={() => navigate(`/bit/${slugify(bit.title)}`)}
+                navigationState={{ from: location.pathname }}
+                onClick={() => {}}
                 onShare={onShare || (() => { })}
-                onBookmark={() => onBookmark && onBookmark(bit.id)}
+                onBookmark={onBookmark}
+
                 onTagClick={(tag) => navigate(`/explore?q=${tag}`)}
               />
             </div>
           ))}
+
         </div>
       </section>
 
@@ -189,16 +198,19 @@ const HomePage: React.FC<HomePageProps> = ({ bits, stats, user, xp = 0, onShare,
         <h2 className="text-3xl font-black text-white mb-8 tracking-tight">Fresh Off the Wire</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {freshBits.map(bit => (
-            <BitCard
-              key={bit.id}
-              bit={bit}
-              onClick={() => navigate(`/bit/${slugify(bit.title)}`)}
-              onShare={onShare || (() => { })}
-              onBookmark={() => onBookmark && onBookmark(bit.id)}
-              onTagClick={(tag) => navigate(`/explore?q=${tag}`)}
-            />
+              <BitCard
+                key={bit.id}
+                bit={bit}
+                navigationState={{ from: location.pathname }}
+                onClick={() => {}}
+                onShare={onShare || (() => { })}
+                onBookmark={onBookmark}
+                onTagClick={(tag) => navigate(`/explore?q=${tag}`)}
+              />
+
           ))}
         </div>
+
       </section>
 
       {/* 7. FINAL CTA */}

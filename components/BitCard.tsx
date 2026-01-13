@@ -14,10 +14,12 @@ interface BitCardProps {
   onBookmark?: (bit: Bit) => void;
   locked?: boolean;
   onLockedClick?: () => void;
+  navigationState?: any;
 }
 
-const BitCard: React.FC<BitCardProps> = ({ bit, isBookmarked = false, onClick, onShare, onTagClick, onBookmark, locked = false, onLockedClick }) => {
+const BitCard: React.FC<BitCardProps> = ({ bit, isBookmarked = false, onClick, onShare, onTagClick, onBookmark, locked = false, onLockedClick, navigationState }) => {
   const cardRef = useRef<HTMLDivElement>(null);
+
   const [rotate, setRotate] = useState({ x: 0, y: 0 });
 
   const getDifficultyColor = (diff: string) => {
@@ -54,11 +56,11 @@ const BitCard: React.FC<BitCardProps> = ({ bit, isBookmarked = false, onClick, o
   };
 
   const handleShareClick = (e: React.MouseEvent) => {
-    console.log('handleShareClick called for bit:', bit.title);
     e.stopPropagation();
     e.preventDefault();
     onShare(bit);
   };
+
 
 
 
@@ -80,6 +82,7 @@ const BitCard: React.FC<BitCardProps> = ({ bit, isBookmarked = false, onClick, o
     >
       <Link
           to={`/bit/${slugify(bit.title)}`}
+          state={navigationState}
           onClick={(e) => {
             if (locked) {
               e.preventDefault();
@@ -88,6 +91,7 @@ const BitCard: React.FC<BitCardProps> = ({ bit, isBookmarked = false, onClick, o
               onClick(bit);
             }
           }}
+
           className={`flex flex-col h-full bg-[#0B101B] rounded-3xl overflow-hidden transition-all duration-300 ease-out shadow-2xl relative z-10 ${
               isNew
               ? 'border border-cyan-500/40 shadow-[0_0_30px_-10px_rgba(6,182,212,0.15)]'

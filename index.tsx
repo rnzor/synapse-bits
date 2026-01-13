@@ -5,6 +5,8 @@ import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
 import { BrowserRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
+import './src/index.css';
+
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

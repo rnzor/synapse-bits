@@ -1,3 +1,9 @@
+
+// DEPRECATED: This file contains example static tracks.
+// The app now uses dynamically generated tracks from deriveTracks() in src/utils/derive.ts.
+// Keep for reference if implementing curated tracks with manual overrides in the future.
+
+/*
 import { Track } from '../../types';
 
 export const TRACKS: Track[] = [
@@ -56,3 +62,6 @@ export const TRACKS: Track[] = [
     ]
   }
 ];
+*/
+
+export const TRACKS: any[] = [];

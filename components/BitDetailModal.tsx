@@ -2,7 +2,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Bit, UserStats } from '../types';
-import { IconX, IconShare, IconBookmark, IconCode, IconNetwork, IconHeart, IconCheck } from './Icons';
+import { IconX, IconShare, IconBookmark, IconCode, IconNetwork, IconHeart, IconArrowLeft, IconArrowRight } from './Icons';
 import BitCard from './BitCard';
 import SimpleSyntaxHighlighter from './SimpleSyntaxHighlighter';
 import { sanitizeHtml } from '../utils';
@@ -34,6 +34,11 @@ interface BitDetailModalProps {
   isBookmarked?: boolean;
   onVote?: (id: string) => void;
   stats?: UserStats;
+  onNext?: () => void;
+  onPrevious?: () => void;
+  currentIndex?: number;
+  totalCount?: number;
+  contextLabel?: string;
 }
 
 const BitDetailModal: React.FC<BitDetailModalProps> = ({
@@ -44,9 +49,15 @@ const BitDetailModal: React.FC<BitDetailModalProps> = ({
     onBookmark,
     isBookmarked = false,
     onVote,
-    onMarkCompleted,
-    stats
+    onMarkCompleted: _onMarkCompleted,
+    stats,
+    onNext,
+    onPrevious,
+    currentIndex,
+    totalCount,
+    contextLabel
 }) => {
+
   // Logic to find related bits
   const relatedBits = allBits
     .filter(b => b.id !== bit.id) // Exclude current
@@ -172,13 +183,50 @@ const BitDetailModal: React.FC<BitDetailModalProps> = ({
                  >
                      <IconBookmark className="w-5 h-5" fill={isBookmarked} />
                  </button>
-                 <button onClick={() => onShare && onShare(bit)} className="p-2 text-slate-400 hover:text-white transition-colors" title="Share">
+          <button onClick={() => onShare && onShare(bit)} className="p-2 text-slate-400 hover:text-white transition-colors" title="Share">
                      <IconShare className="w-5 h-5" />
                  </button>
              </div>
          </div>
+
+         {/* Navigation Bar */}
+         {(onNext || onPrevious) && (
+            <div className="sticky bottom-0 z-30 bg-black/80 backdrop-blur-2xl border-t border-white/10 p-4 animate-in slide-in-from-bottom-full duration-300">
+                <div className="max-w-3xl mx-auto flex items-center justify-between">
+                    <button
+                        onClick={onPrevious}
+                        disabled={!onPrevious}
+                        className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 transition-all disabled:opacity-20 disabled:cursor-not-allowed group"
+                    >
+                        <IconArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                        <span className="text-sm font-bold tracking-tight">Previous</span>
+                    </button>
+
+                    {contextLabel && currentIndex !== undefined && totalCount !== undefined && (
+                        <div className="hidden sm:flex flex-col items-center">
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-0.5">{contextLabel}</span>
+                            <div className="flex items-center space-x-2">
+                                <span className="text-sm font-bold text-white">{currentIndex + 1}</span>
+                                <span className="text-xs text-slate-600">/</span>
+                                <span className="text-sm font-medium text-slate-400">{totalCount}</span>
+                            </div>
+                        </div>
+                    )}
+
+                    <button
+                        onClick={onNext}
+                        disabled={!onNext}
+                        className="flex items-center space-x-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-20 disabled:cursor-not-allowed group"
+                    >
+                        <span className="text-sm tracking-tight">Next</span>
+                        <IconArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                </div>
+            </div>
+         )}
       </div>
     </article>
+
   );
 };
 
