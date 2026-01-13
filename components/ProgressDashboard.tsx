@@ -4,7 +4,7 @@ import { AuthUser, UserStats, Bit } from '../types';
 import { fetchUserProgress, UserProgressData } from '../services/userService';
 import { IconFire, IconZap, IconCheck, IconClock, IconTrophy, IconArrowRight, IconDiscord } from './Icons';
 import { slugify } from '../utils';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface ProgressDashboardProps {
   user: AuthUser;
@@ -17,6 +17,7 @@ const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ user, localStats,
   const [data, setData] = useState<UserProgressData | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Fetch Data (Simulate API Polling)
   useEffect(() => {
@@ -40,9 +41,10 @@ const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ user, localStats,
      // Simple heuristic: Random bit or the daily one
      const nextBit = bits[Math.floor(Math.random() * bits.length)];
      if (nextBit) {
-         navigate(`/bit/${slugify(nextBit.title)}`);
+         navigate(`/bit/${slugify(nextBit.title)}`, { state: { from: location.pathname } });
      }
   };
+
 
   if (loading || !data) {
       return (

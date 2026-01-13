@@ -5,6 +5,8 @@ import BitCard from '../../components/BitCard';
 import ProgressBar from '../components/ProgressBar';
 import DevDebugOverlay from '../components/DevDebugOverlay';
 import { IconLock } from '../../components/Icons';
+import { slugify } from '../../utils';
+
 
 const TOPICS = [
   { slug: 'networking', label: 'Networking', description: 'Network fundamentals, protocols, and infrastructure', iconKey: 'network', order: 1 },
@@ -105,14 +107,22 @@ const TopicPage: React.FC<{
                 <div className={completed ? 'opacity-60' : locked ? 'blur-sm' : ''}>
                   <BitCard
                     bit={bit}
+                    navigationState={{
+                      from: `/topic/${slug}`,
+                      context: 'topic',
+                      topicSlug: slug,
+                      topicBitIds: topicBits.map(b => b.id),
+                      currentIndex: topicBits.findIndex(b => b.id === bit.id),
+                      contextLabel: topic.label
+                    }}
                     onClick={() => {
                       if (locked) return; // Don't navigate if locked
-                      navigate(`/bit/${bit.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`);
                     }}
                     onShare={() => {}}
                     onTagClick={() => {}}
                     onBookmark={() => {}}
                   />
+
                 </div>
                 {completed && (
                   <div className="absolute top-2 right-2 bg-emerald-600 text-white rounded-full p-1">

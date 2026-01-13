@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bit } from '../types';
 import { IconCode, IconNetwork, IconHeart, IconShare, IconX, IconCheck, IconRefresh, IconEye, IconArrowRight } from './Icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { slugify } from '../utils';
 
 interface BitSwipeDeckProps {
@@ -17,6 +17,7 @@ const BitSwipeDeck: React.FC<BitSwipeDeckProps> = ({ bits, onVote, onShare }) =>
   const [isDragging, setIsDragging] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Reset index when list changes (e.g. search filter)
   useEffect(() => {
@@ -72,9 +73,10 @@ const BitSwipeDeck: React.FC<BitSwipeDeckProps> = ({ bits, onVote, onShare }) =>
 
   const handleCardClick = () => {
     if (Math.abs(dragX) < 5) {
-        navigate(`/bit/${slugify(currentBit.title)}`);
+        navigate(`/bit/${slugify(currentBit.title)}`, { state: { from: location.pathname } });
     }
   };
+
 
   if (!currentBit) {
     return (
@@ -200,14 +202,15 @@ const BitSwipeDeck: React.FC<BitSwipeDeckProps> = ({ bits, onVote, onShare }) =>
                     <IconX className="w-6 h-6 transition-transform group-hover:rotate-90" />
                 </button>
                 
-                {/* Details / Read */}
+                 {/* Details / Read */}
                 <button 
-                    onClick={(e) => { e.stopPropagation(); navigate(`/bit/${slugify(currentBit.title)}`); }}
+                    onClick={(e) => { e.stopPropagation(); navigate(`/bit/${slugify(currentBit.title)}`, { state: { from: location.pathname } }); }}
                     className="group w-12 h-12 rounded-full bg-white/5 border border-white/10 text-slate-300 flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-90 hover:bg-white/10 hover:text-white"
                     aria-label="Details"
                 >
                     <IconEye className="w-5 h-5" />
                 </button>
+
 
                 {/* Vote / Like (Primary) */}
                 <button 

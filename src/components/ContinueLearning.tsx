@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Bit, Track, UserStats } from '../../types';
 import { getContinueLearningRecommendation } from '../utils/progress';
 import { IconPlay, IconArrowRight } from '../../components/Icons';
+import { slugify } from '../../utils';
+
 
 interface ContinueLearningProps {
   tracks: Track[];
@@ -16,7 +18,7 @@ const ContinueLearning: React.FC<ContinueLearningProps> = ({
   tracks,
   bits,
   stats,
-  user,
+  user: _user,
   className = ''
 }) => {
   const navigate = useNavigate();
@@ -50,9 +52,10 @@ const ContinueLearning: React.FC<ContinueLearningProps> = ({
       title = 'Continue Learning';
       description = `Continue with "${bit.title}"`;
       actionText = 'Continue';
-      actionPath = `/bit/${bit.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+      actionPath = `/bit/${slugify(bit.title)}`;
     }
   } else if (recommendation.nextTrackSlug) {
+
     track = tracks.find(t => t.slug === recommendation.nextTrackSlug);
     if (track) {
       title = 'Start New Track';
